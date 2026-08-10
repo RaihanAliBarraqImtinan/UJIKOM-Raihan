@@ -18,10 +18,10 @@ class AdminController extends Controller
     }
 
     // CRUD Alat: Menampilkan daftar alat
-    public function indexAlat()
+    public function indexUser()
     {
-        $alats = Alat::with('kategori')->get();
-        return view('admin.alat.index', compact('alats'));
+        $users = User::all();
+        return view('admin.alat.index', compact('users'));
     }
 
     // Menyimpan Alat Baru

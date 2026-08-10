@@ -7,13 +7,13 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    // 1. Menampilkan Form Login
+    // Menampilkan Form Login
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    // 2. Memproses Login
+    // Memproses Login
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -26,6 +26,7 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
+            // Redirect berdasarkan Role sesuai matriks Anda
             if ($user->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             } elseif ($user->role === 'petugas') {
@@ -43,11 +44,10 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    // 3. Proses Logout
+    // Proses Logout
     public function logout(Request $request)
     {
         Auth::logout();
-
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
