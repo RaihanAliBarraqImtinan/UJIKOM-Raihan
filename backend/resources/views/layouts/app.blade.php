@@ -16,11 +16,19 @@
             <div class="p-5 text-xl font-bold tracking-wider border-b border-gray-800">
                 PANEL ADMIN
             </div>
+            
+            <!-- Menggunakan Navigasi dari Gambar -->
             <nav class="flex-1 p-4 space-y-2">
-                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 rounded-lg bg-gray-800 text-white font-medium">Dashboard</a>
-                <a href="{{ route('admin.alat.index') }}" class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola Alat</a>
-                <a href="{{ route('admin.user.index') }}" class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola User</a>
+                <a href="{{ route('admin.dashboard') }}"
+                   class="block px-4 py-2 rounded-lg bg-gray-800 text-white font-medium">Dashboard</a>
+                <a href="{{ route('admin.user.index') }}"
+                   class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola User</a>
+                <a href="{{ route('admin.kategori.index') }}"
+                   class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola Kategori</a>
+                <a href="{{ route('admin.alat.index') }}"
+                   class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola Alat</a>
             </nav>
+
             <div class="p-4 border-t border-gray-800 text-sm text-gray-400">
                 Logged in as: <span class="text-white font-semibold">{{ auth()->user()->name }}</span>
             </div>
