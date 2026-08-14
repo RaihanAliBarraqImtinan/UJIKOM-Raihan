@@ -42,7 +42,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // CRUD Alat
     Route::get('/alat', [AdminController::class, 'indexAlat'])->name('alat.index');
+    Route::get('/alat/create', [AdminController::class, 'createAlat'])->name('alat.create');
     Route::post('/alat', [AdminController::class, 'storeAlat'])->name('alat.store');
+    Route::get('/alat/{id}/edit', [AdminController::class, 'editAlat'])->name('alat.edit');
+    Route::put('/alat/{id}', [AdminController::class, 'updateAlat'])->name('alat.update');
+    Route::delete('/alat/{id}', [AdminController::class, 'destroyAlat'])->name('alat.destroy');
 });
 
 // === PETUGAS ROUTES ===
@@ -58,3 +62,10 @@ Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam
     Route::post('/peminjaman/ajukan', [PeminjamController::class, 'ajukanPeminjaman'])->name('peminjaman.ajukan');
     Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
 });
+
+// CRUD Peminjaman
+Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])->name('admin.peminjaman.index');
+Route::get('/peminjaman/create', [AdminController::class, 'createPeminjaman'])->name('admin.peminjaman.create');
+Route::post('/peminjaman', [AdminController::class, 'storePeminjaman'])->name('admin.peminjaman.store');
+Route::put('/peminjaman/{id}/status', [AdminController::class, 'updateStatusPeminjaman'])->name('admin.peminjaman.updateStatus');
+Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('admin.peminjaman.destroy');

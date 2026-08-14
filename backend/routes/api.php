@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\AuthController;
 
 // Public Routes (Tidak perlu token)
 Route::post('/register', [AuthController::class, 'register']);

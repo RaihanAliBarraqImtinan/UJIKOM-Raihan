@@ -16,17 +16,32 @@
             <div class="p-5 text-xl font-bold tracking-wider border-b border-gray-800">
                 PANEL ADMIN
             </div>
-            
-            <!-- Menggunakan Navigasi dari Gambar -->
             <nav class="flex-1 p-4 space-y-2">
                 <a href="{{ route('admin.dashboard') }}"
-                   class="block px-4 py-2 rounded-lg bg-gray-800 text-white font-medium">Dashboard</a>
+                class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.dashboard') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    Dashboard
+                </a>
+
                 <a href="{{ route('admin.user.index') }}"
-                   class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola User</a>
+                class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.user*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    Kelola User
+                </a>
+
                 <a href="{{ route('admin.kategori.index') }}"
-                   class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola Kategori</a>
+                class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.kategori*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    Kelola Kategori
+                </a>
+
                 <a href="{{ route('admin.alat.index') }}"
-                   class="block px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white transition">Kelola Alat</a>
+                class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.alat*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    Kelola Alat
+                </a>
+
+                <!-- Menu Kelola Peminjaman (Sudah dipindahkan ke dalam Sidebar) -->
+                <a href="{{ route('admin.peminjaman.index') }}" 
+                class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.peminjaman*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    Kelola Peminjaman
+                </a>
             </nav>
 
             <div class="p-4 border-t border-gray-800 text-sm text-gray-400">
@@ -58,7 +73,6 @@
             </main>
 
         </div>
-
     </div>
 
 </body>
