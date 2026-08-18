@@ -11,6 +11,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/katalog', [AlatController::class, 'katalog']);
 
     Route::middleware('role.admin')->group(function () {
         // Route untuk hak akses admin
@@ -22,5 +23,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role.peminjam')->group(function () {
         // Route untuk hak akses peminjam
+    });
+
+    // Hanya Admin
+    Route::middleware('role.admin')->group(function () {
+    Route::apiResource('kategori', KategoriController::class);
+    Route::apiResource('alat', AlatController::class);
+    Route::get('/katalog', [AlatController::class, 'katalog']);
     });
 });

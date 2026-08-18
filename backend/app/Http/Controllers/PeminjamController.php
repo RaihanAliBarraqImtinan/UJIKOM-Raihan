@@ -63,4 +63,3 @@ class PeminjamController extends Controller
         return view('peminjam.riwayat', compact('peminjamans'));
     }
 }
-```[cite: 1]

@@ -2,18 +2,46 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    // Tambahan untuk API Register
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'no_hp' => 'nullable|string',
+            'alamat' => 'nullable|string',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'peminjam',
+            'no_hp' => $request->no_hp,
+            'alamat' => $request->alamat,
+        ]);
+
+        return response()->json([
+            'message' => 'Registrasi berhasil',
+            'user' => $user
+        ], 201);
+    }
+
     // Menampilkan Form Login
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    // Memproses Login
+    // Memproses Login (Kode asli dari guru)
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -44,7 +72,7 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    // Proses Logout
+    // Proses Logout (Kode asli dari guru)
     public function logout(Request $request)
     {
         Auth::logout();
