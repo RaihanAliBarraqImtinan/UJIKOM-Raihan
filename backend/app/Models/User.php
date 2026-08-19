@@ -24,9 +24,11 @@ class User extends Authenticatable
 
     protected function casts(): array
     {
-        return [
-            'password' => 'hashed',
+       return [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed', // Laravel otomatis meng-hash tek apapun yang masuk ke properti password!
         ];
+
     }
 
     public function peminjaman(): HasMany
