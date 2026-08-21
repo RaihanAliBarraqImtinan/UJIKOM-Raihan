@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // Tambahan untuk API Register
+    // Tambahan untuk API / Form Register
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -41,7 +41,7 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    // Memproses Login (Kode asli dari guru)
+    // Memproses Login
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -54,13 +54,13 @@ class AuthController extends Controller
 
             $user = Auth::user();
 
-            // Redirect berdasarkan Role sesuai matriks Anda
+            // Redirect berdasarkan Role
             if ($user->role === 'admin') {
                 return redirect()->route('admin.dashboard');
             } elseif ($user->role === 'petugas') {
                 return redirect()->route('petugas.peminjaman.index');
             } elseif ($user->role === 'peminjam') {
-                return redirect()->route('peminjam.katalog');
+                return redirect()->route('peminjam.dashboard');
             }
 
             Auth::logout();
@@ -72,7 +72,7 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    // Proses Logout (Kode asli dari guru)
+    // Proses Logout
     public function logout(Request $request)
     {
         Auth::logout();

@@ -139,4 +139,32 @@ class PetugasController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Menampilkan halaman laporan dengan filter rentang tanggal.
+     */
+    public function indexLaporan(Request $request)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $query = Peminjaman::with(['user', 'detailPinjams.alat']);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        }
+
+        $peminjamans = $query->latest()->get();
+
+        return view('petugas.laporan.index', compact('peminjamans', 'startDate', 'endDate'));
+    }
+
+    /**
+     * Menampilkan cetakan nota/bon peminjaman berupa bentuk struk belanja.
+     */
+    public function cetakNota($id)
+    {
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat'])->findOrFail($id);
+        return view('petugas.laporan.nota', compact('peminjaman'));
+    }
 }

@@ -6,12 +6,12 @@ use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\PeminjamController;
 use App\Http\Controllers\AuthController;
 
-// Redirect halaman utama ke login
+// Redirect halaman utama
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Route Guest (Belum Login)
+// Route Guest
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
@@ -52,12 +52,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::get('/peminjaman/create', [AdminController::class, 'createPeminjaman'])->name('peminjaman.create');
     Route::post('/peminjaman', [AdminController::class, 'storePeminjaman'])->name('peminjaman.store');
-    
-    // PERBAIKAN DI SINI:
-    // 1. Mengubah URI '/peminjaman/{id}/status' menjadi '/peminjaman/{id}' (karena di Blade action form mengarah ke endpoint ini)
-    // 2. Mengubah nama route dari 'peminjaman.updateStatus' menjadi 'peminjaman.update'
     Route::put('/peminjaman/{id}', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.update');
-    
     Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
 
     // MODUL KELOLA PENGEMBALIAN (ADMIN)
@@ -67,18 +62,23 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 // === PETUGAS ROUTES ===
 Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petugas.')->group(function () {
-    // Approval Peminjaman
     Route::get('/peminjaman', [PetugasController::class, 'indexPeminjaman'])->name('peminjaman.index');
     Route::post('/peminjaman/{id}/setujui', [PetugasController::class, 'setujuiPeminjaman'])->name('peminjaman.setujui');
 
-    // Modul Pengembalian Alat (Daftar & Proses)
     Route::get('/pengembalian', [PetugasController::class, 'indexPengembalian'])->name('pengembalian.index');
     Route::post('/pengembalian/{id}', [PetugasController::class, 'prosesPengembalian'])->name('pengembalian.proses');
+
+    // Cetak Laporan & Bon Struk
+    Route::get('/laporan', [PetugasController::class, 'indexLaporan'])->name('laporan.index');
+    Route::get('/laporan/nota/{id}', [PetugasController::class, 'cetakNota'])->name('laporan.nota');
 });
 
 // === PEMINJAM ROUTES ===
 Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam.')->group(function () {
+    Route::get('/dashboard', [PeminjamController::class, 'dashboard'])->name('dashboard');
     Route::get('/katalog', [PeminjamController::class, 'katalogAlat'])->name('katalog');
     Route::post('/peminjaman/ajukan', [PeminjamController::class, 'ajukanPeminjaman'])->name('peminjaman.ajukan');
     Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
+    Route::get('/pengembalian', [PeminjamController::class, 'pengembalian'])->name('pengembalian');
+    Route::get('/profil', [PeminjamController::class, 'profil'])->name('profil');
 });

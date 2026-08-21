@@ -13,8 +13,14 @@
 
         <!-- SIDEBAR -->
         <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
-            <div class="p-5 text-xl font-bold tracking-wider border-b border-gray-800">
-                {{ auth()->user()->role == 'admin' ? 'PANEL ADMIN' : 'PANEL PETUGAS' }}
+            <div class="p-5 text-xl font-bold tracking-wider border-b border-gray-800 uppercase">
+                @if(auth()->user()->role == 'admin')
+                    PANEL ADMIN
+                @elseif(auth()->user()->role == 'petugas')
+                    PANEL PETUGAS
+                @else
+                    PANEL PEMINJAM
+                @endif
             </div>
             <nav class="flex-1 p-4 space-y-2">
 
@@ -45,7 +51,6 @@
                         Kelola Peminjaman
                     </a>
 
-                    {{-- MENU KELOLA PENGEMBALIAN UNTUK ADMIN --}}
                     <a href="{{ route('admin.pengembalian.index') }}" 
                     class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('admin.pengembalian*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                         Kelola Pengembalian
@@ -62,6 +67,34 @@
                     <a href="{{ route('petugas.pengembalian.index') }}"
                     class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.pengembalian*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                         Pengembalian Alat
+                    </a>
+                @endif
+
+                {{-- MENU KHUSUS PEMINJAM --}}
+                @if(auth()->user()->role == 'peminjam')
+                    <a href="{{ route('peminjam.dashboard') }}"
+                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('peminjam.dashboard') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                        Dashboard
+                    </a>
+
+                    <a href="{{ route('peminjam.katalog') }}"
+                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('peminjam.katalog') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                        Katalog Alat
+                    </a>
+
+                    <a href="{{ route('peminjam.riwayat') }}"
+                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('peminjam.riwayat') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                        Peminjaman Saya
+                    </a>
+
+                    <a href="{{ route('peminjam.pengembalian') }}"
+                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('peminjam.pengembalian') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                        Pengembalian
+                    </a>
+
+                    <a href="{{ route('peminjam.profil') }}"
+                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('peminjam.profil') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                        Profil Saya
                     </a>
                 @endif
 
