@@ -7,38 +7,76 @@ use App\Models\Pengembalian;
 use App\Models\Alat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Exception;
+use Carbon\Carbon;
 
 class PetugasController extends Controller
 {
-    /**
-     * Menampilkan daftar pengajuan peminjaman dari peminjam/siswa.
-     */
+    // ==================== KELOLA PEMINJAMAN ====================
+    
+    // Menampilkan daftar pengajuan peminjaman dari peminjam
     public function indexPeminjaman(Request $request)
     {
         $search = $request->input('search');
 
         $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
+            ->where('status', 'diajukan')
             ->when($search, function ($query, $search) {
                 return $query->whereHas('user', function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%");
                 });
             })
             ->latest()
-            ->paginate(10)
-            ->withQueryString();
+            ->paginate(10);
 
         return view('petugas.peminjaman.index', compact('peminjamans', 'search'));
     }
 
-    /**
-     * Menampilkan daftar alat yang SEDANG DIPINJAM (siap dikembalikan).
-     */
+    // Menyetujui Peminjaman (Mengubah status & mengurangi stok alat)
+    public function setujuiPeminjaman($id)
+    {
+        DB::beginTransaction();
+        try {
+            $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
+            $peminjaman->update(['status' => 'dipinjam']);
+
+            foreach ($peminjaman->detailPinjams as $detail) {
+                $alat = Alat::findOrFail($detail->alat_id);
+                $alat->stok -= $detail->jumlah;
+                $alat->save();
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Peminjaman disetujui dan stok alat dikurangi.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    // Menolak Peminjaman
+    public function tolakPeminjaman($id)
+    {
+        try {
+            $peminjaman = Peminjaman::findOrFail($id);
+
+            if ($peminjaman->status == 'diajukan') {
+                $peminjaman->delete();
+                return redirect()->back()->with('success', 'Pengajuan peminjaman berhasil ditolak.');
+            }
+
+            return redirect()->back()->with('error', 'Status peminjaman sudah berubah.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    // ==================== KELOLA PENGEMBALIAN ====================
+
+    // Menampilkan daftar peminjaman yang sedang dipinjam
     public function indexPengembalian(Request $request)
     {
         $search = $request->input('search');
 
-        // Menampilkan data dengan status 'dipinjam' atau 'telat'
         $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
             ->whereIn('status', ['dipinjam', 'telat'])
             ->when($search, function ($query, $search) {
@@ -47,124 +85,87 @@ class PetugasController extends Controller
                 });
             })
             ->latest()
-            ->paginate(10)
-            ->withQueryString();
+            ->paginate(10);
 
         return view('petugas.pengembalian.index', compact('peminjamans', 'search'));
     }
 
-    /**
-     * Menyetujui pengajuan peminjaman dan mengurangkan stok alat.
-     */
-    public function setujuiPeminjaman($id)
+    // Memproses Pengembalian Alat
+    public function prosesPengembalian(Request $request, $id)
     {
         DB::beginTransaction();
         try {
-            $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
-
-            if ($peminjaman->status === 'dipinjam' || $peminjaman->status === 'selesai') {
-                return redirect()->back()->with('error', 'Peminjaman ini sudah diproses sebelumnya.');
-            }
-
-            foreach ($peminjaman->detailPinjams as $detail) {
-                $alat = $detail->alat;
-                if (!$alat || $alat->stok < $detail->jumlah) {
-                    DB::rollBack();
-                    return redirect()->back()->with(
-                        'error', 
-                        "Stok alat '{$detail->alat->nama_alat}' tidak mencukupi. (Sisa stok: {$alat->stok})"
-                    );
-                }
-            }
-
-            foreach ($peminjaman->detailPinjams as $detail) {
-                $alat = $detail->alat;
-                $alat->stok -= $detail->jumlah;
-                $alat->save();
-            }
-
-            $peminjaman->update(['status' => 'dipinjam']);
-
-            DB::commit();
-            return redirect()->back()->with('success', 'Peminjaman berhasil disetujui dan stok alat telah diperbarui.');
-
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Memproses pengembalian alat dan mengembalikan stok ke inventaris.
-     */
-    public function prosesPengembalian(Request $request, $peminjamanId)
-    {
-        $request->validate([
-            'kondisi_kembali' => 'required|string|max:255',
-            'denda'           => 'nullable|integer|min:0',
-        ]);
-
-        DB::beginTransaction();
-        try {
-            $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($peminjamanId);
+            $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
 
             if ($peminjaman->status === 'selesai') {
-                return redirect()->back()->with('error', 'Transaksi peminjaman ini sudah diselesaikan sebelumnya.');
+                return redirect()->back()->with('error', 'Peminjaman ini sudah dikembalikan.');
             }
 
-            // 1. Simpan catatan pengembalian
-            Pengembalian::create([
-                'peminjaman_id'   => $peminjaman->id,
-                'tgl_kembali'     => now(),
-                'kondisi_kembali' => $request->kondisi_kembali,
-                'denda'           => $request->denda ?? 0,
-                'petugas_id'      => auth()->id(),
-            ]);
-
-            // 2. Ubah status peminjaman menjadi 'selesai'
-            $peminjaman->update(['status' => 'selesai']);
-
-            // 3. Kembalikan stok alat ke inventaris
+            // 1. Kembalikan stok alat
             foreach ($peminjaman->detailPinjams as $detail) {
                 $alat = Alat::findOrFail($detail->alat_id);
                 $alat->stok += $detail->jumlah;
                 $alat->save();
             }
 
-            DB::commit();
-            return redirect()->back()->with('success', 'Pengembalian berhasil dicatat dan stok alat telah dipulihkan.');
+            // 2. Hitung denda jika terlambat
+            $tglRencana = Carbon::parse($peminjaman->tgl_kembali_rencana ?? $peminjaman->created_at->addDays(3));
+            $tglKembali = Carbon::now();
+            $dendaPerHari = 1000;
+            $denda = 0;
 
-        } catch (Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            if ($tglKembali->greaterThan($tglRencana)) {
+                $selisihHari = $tglKembali->diffInDays($tglRencana);
+                $denda = $selisihHari * $dendaPerHari;
+            }
+
+            // 3. Simpan catatan pengembalian
+            Pengembalian::create([
+                'peminjaman_id'   => $peminjaman->id,
+                'petugas_id'      => auth()->id(),
+                'tgl_kembali'     => $tglKembali,
+                'kondisi_kembali' => $request->input('kondisi_kembali', 'Baik'),
+                'denda'           => $denda,
+            ]);
+
+            // 4. Update status peminjaman menjadi selesai
+            $peminjaman->update(['status' => 'selesai']);
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Pengembalian alat berhasil diproses.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Gagal memproses pengembalian: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Menampilkan halaman laporan dengan filter rentang tanggal.
-     */
+    // ==================== KELOLA LAPORAN ====================
+
+    // Menampilkan Halaman Rekap Laporan & Filter
     public function indexLaporan(Request $request)
     {
+        $status = $request->input('status');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $query = Peminjaman::with(['user', 'detailPinjams.alat']);
+        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])
+            ->when($status, function ($query, $status) {
+                return $query->where('status', $status);
+            })
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                return $query->whereBetween(DB::raw('DATE(created_at)'), [$startDate, $endDate]);
+            })
+            ->latest()
+            ->paginate(10);
 
-        if ($startDate && $endDate) {
-            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
-        }
-
-        $peminjamans = $query->latest()->get();
-
-        return view('petugas.laporan.index', compact('peminjamans', 'startDate', 'endDate'));
+        return view('petugas.laporan.index', compact('peminjamans', 'status', 'startDate', 'endDate'));
     }
 
-    /**
-     * Menampilkan cetakan nota/bon peminjaman berupa bentuk struk belanja.
-     */
+    // Menampilkan Cetak Nota Struk Peminjaman
     public function cetakNota($id)
     {
-        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat'])->findOrFail($id);
-        return view('petugas.laporan.nota', compact('peminjaman'));
+        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])->findOrFail($id);
+
+        return view('petugas.laporan.cetak', compact('peminjaman'));
     }
 }

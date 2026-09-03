@@ -42,7 +42,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="window.print()">
 
 <div class="receipt">
     <button onclick="window.print()" class="btn-print">Cetak / Simpan PDF</button>
@@ -95,6 +95,12 @@
             <td>STATUS:</td>
             <td class="text-right"><strong>{{ strtoupper($peminjaman->status) }}</strong></td>
         </tr>
+        @if(optional($peminjaman->pengembalian)->denda)
+        <tr>
+            <td>DENDA:</td>
+            <td class="text-right"><strong>Rp {{ number_format($peminjaman->pengembalian->denda, 0, ',', '.') }}</strong></td>
+        </tr>
+        @endif
     </table>
 
     <div class="line"></div>

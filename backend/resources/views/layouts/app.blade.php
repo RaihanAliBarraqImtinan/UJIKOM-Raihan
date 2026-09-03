@@ -60,13 +60,18 @@
                 {{-- MENU KHUSUS PETUGAS --}}
                 @if(auth()->user()->role == 'petugas')
                     <a href="{{ route('petugas.peminjaman.index') }}"
-                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.peminjaman*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
-                        Peminjaman Alat
+                    class="block px-4 py-2.5 rounded-lg transition {{ request()->routeIs('petugas.peminjaman*') ? 'bg-slate-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-slate-800 hover:text-white' }}">
+                        Persetujuan Peminjaman
                     </a>
 
                     <a href="{{ route('petugas.pengembalian.index') }}"
-                    class="block px-4 py-2 rounded-lg transition {{ request()->routeIs('petugas.pengembalian*') ? 'bg-gray-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
-                        Pengembalian Alat
+                    class="block px-4 py-2.5 rounded-lg transition {{ request()->routeIs('petugas.pengembalian*') ? 'bg-slate-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-slate-800 hover:text-white' }}">
+                        Pemantauan Pengembalian
+                    </a>
+
+                    <a href="{{ route('petugas.laporan.index') }}"
+                    class="block px-4 py-2.5 rounded-lg transition {{ request()->routeIs('petugas.laporan*') ? 'bg-slate-800 text-white font-medium shadow' : 'text-gray-400 hover:bg-slate-800 hover:text-white' }}">
+                        Cetak Laporan
                     </a>
                 @endif
 
