@@ -45,17 +45,17 @@
                     </tr>
                 </thead>
                 <tbody class="text-gray-700 text-sm divide-y divide-gray-200">
-                    @forelse($alats as $index => $alat)
+                    @forelse($alats as $alat)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="py-3 px-4 text-center">
-                                <input type="checkbox" name="alat_id[]" value="{{ $alat->id }}" class="rounded text-blue-600 focus:ring-blue-500">
+                                <input type="checkbox" name="alat_id[]" value="{{ $alat->id }}" class="alat-checkbox rounded text-blue-600 focus:ring-blue-500">
                             </td>
                             <td class="py-3 px-4 font-medium text-gray-900">{{ $alat->nama_alat }}</td>
                             <td class="py-3 px-4">{{ $alat->kategori->nama_kategori ?? '-' }}</td>
                             <td class="py-3 px-4 font-semibold">{{ $alat->stok }}</td>
                             <td class="py-3 px-4">
-                                <input type="number" name="jumlah[]" value="1" min="1" max="{{ $alat->stok }}" 
-                                    class="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+                                <input type="number" name="jumlah[{{ $alat->id }}]" value="1" min="1" max="{{ $alat->stok }}" disabled
+                                    class="jumlah-input w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm disabled:bg-gray-100">
                             </td>
                         </tr>
                     @empty
@@ -71,4 +71,18 @@
         </div>
     </div>
 </form>
+
+<script>
+    document.querySelectorAll('.alat-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            let row = this.closest('tr');
+            let jumlahInput = row.querySelector('.jumlah-input');
+            if (this.checked) {
+                jumlahInput.removeAttribute('disabled');
+            } else {
+                jumlahInput.setAttribute('disabled', 'disabled');
+            }
+        });
+    });
+</script>
 @endsection

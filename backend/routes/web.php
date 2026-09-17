@@ -77,9 +77,18 @@ Route::middleware(['auth', 'role:petugas,admin'])->prefix('petugas')->name('petu
 // === PEMINJAM ROUTES ===
 Route::middleware(['auth', 'role:peminjam'])->prefix('peminjam')->name('peminjam.')->group(function () {
     Route::get('/dashboard', [PeminjamController::class, 'dashboard'])->name('dashboard');
+    
+    // Fitur 1: Melihat Daftar Alat
     Route::get('/katalog', [PeminjamController::class, 'katalogAlat'])->name('katalog');
+    
+    // Fitur 2: Mengajukan Peminjaman
     Route::post('/peminjaman/ajukan', [PeminjamController::class, 'ajukanPeminjaman'])->name('peminjaman.ajukan');
-    Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
+    
+    // Fitur 3: Mengembalikan Alat
     Route::get('/pengembalian', [PeminjamController::class, 'pengembalian'])->name('pengembalian');
+    Route::post('/pengembalian/{id}', [PeminjamController::class, 'prosesPengembalian'])->name('pengembalian.proses');
+    
+    // Route Pendukung Sidebar
+    Route::get('/riwayat', [PeminjamController::class, 'riwayatPeminjaman'])->name('riwayat');
     Route::get('/profil', [PeminjamController::class, 'profil'])->name('profil');
 });
