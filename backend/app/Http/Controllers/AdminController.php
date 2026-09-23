@@ -15,14 +15,19 @@ use Carbon\Carbon;
 
 class AdminController extends Controller
 {
-    // Menampilkan Dashboard Admin & Log Aktivitas
+    // ==========================================
+    // DASHBOARD & LOG AKTIVITAS
+    // ==========================================
     public function index()
     {
-        $logs = LogAktivitas::with('user')->latest()->take(10)->get();
+        // Mengurutkan berdasarkan ID terbesar agar log terbaru selalu berada di paling atas
+        $logs = LogAktivitas::with('user')->orderBy('id', 'desc')->take(10)->get();
         return view('admin.dashboard', compact('logs'));
     }
 
-    // CRUD Alat: Menampilkan daftar alat
+    // ==========================================
+    // CRUD ALAT / BARANG
+    // ==========================================
     public function indexAlat(Request $request)
     {
         $search = $request->input('search');
@@ -42,14 +47,12 @@ class AdminController extends Controller
         return view('admin.alat.index', compact('alats', 'search'));
     }
 
-    // 2. Menampilkan form tambah alat
     public function createAlat()
     {
         $kategoris = Kategori::all();
         return view('admin.alat.create', compact('kategoris'));
     }
 
-    // 3. Menyimpan alat baru
     public function storeAlat(Request $request)
     {
         $request->validate([
@@ -63,7 +66,6 @@ class AdminController extends Controller
 
         $data = $request->all();
 
-        // Handle Upload Gambar jika ada
         if ($request->hasFile('gambar')) {
             $file = $request->file('gambar');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -71,12 +73,18 @@ class AdminController extends Controller
             $data['gambar'] = 'storage/alat/' . $filename;
         }
 
-        Alat::create($data);
+        $alat = Alat::create($data);
+
+        // Catat Log Aktivitas (Disesuaikan dengan modul)
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menambahkan data alat baru: {$alat->nama_alat}.",
+            'waktu'     => now(),
+        ]);
 
         return redirect()->route('admin.alat.index')->with('success', 'Data alat berhasil ditambahkan.');
     }
 
-    // 4. Menampilkan form edit alat
     public function editAlat($id)
     {
         $alat = Alat::findOrFail($id);
@@ -84,7 +92,6 @@ class AdminController extends Controller
         return view('admin.alat.edit', compact('alat', 'kategoris'));
     }
 
-    // 5. Memperbarui data alat
     public function updateAlat(Request $request, $id)
     {
         $alat = Alat::findOrFail($id);
@@ -100,9 +107,7 @@ class AdminController extends Controller
 
         $data = $request->all();
 
-        // Handle Update Gambar jika ada file baru
         if ($request->hasFile('gambar')) {
-            // Hapus gambar lama jika ada
             if ($alat->gambar && file_exists(public_path($alat->gambar))) {
                 unlink(public_path($alat->gambar));
             }
@@ -115,25 +120,40 @@ class AdminController extends Controller
 
         $alat->update($data);
 
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Memperbarui data alat: {$alat->nama_alat}.",
+            'waktu'     => now(),
+        ]);
+
         return redirect()->route('admin.alat.index')->with('success', 'Data alat berhasil diperbarui.');
     }
 
-    // 6. Menghapus data alat
     public function destroyAlat($id)
     {
         $alat = Alat::findOrFail($id);
+        $namaAlat = $alat->nama_alat;
 
-        // Hapus file gambar fisik jika ada
         if ($alat->gambar && file_exists(public_path($alat->gambar))) {
             unlink(public_path($alat->gambar));
         }
 
         $alat->delete();
 
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menghapus data alat: {$namaAlat}.",
+            'waktu'     => now(),
+        ]);
+
         return redirect()->route('admin.alat.index')->with('success', 'Data alat berhasil dihapus.');
     }
 
-    // CRUD User (Manajemen User Admin, Petugas, Peminjam)
+    // ==========================================
+    // CRUD USER / PENGGUNA
+    // ==========================================
     public function indexUser(Request $request)
     {
         $search = $request->input('search');
@@ -155,7 +175,6 @@ class AdminController extends Controller
         return view('admin.user.create');
     }
 
-    // Menyimpan user baru ke database
     public function storeUser(Request $request)
     {
         $request->validate([
@@ -165,12 +184,19 @@ class AdminController extends Controller
             'role' => 'required|in:admin,petugas,peminjam',
         ]);
 
-        User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'no_hp' => $request->no_hp,
+        ]);
+
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menambahkan user baru: {$user->name} ({$user->role}).",
+            'waktu'     => now(),
         ]);
 
         return redirect()->route('admin.user.index')->with('success', 'User berhasil ditambahkan.');
@@ -182,7 +208,6 @@ class AdminController extends Controller
         return view('admin.user.edit', compact('user'));
     }
 
-    // Memperbarui data user
     public function updateUser(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -206,19 +231,35 @@ class AdminController extends Controller
 
         $user->update($data);
 
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Memperbarui data user: {$user->name}.",
+            'waktu'     => now(),
+        ]);
+
         return redirect()->route('admin.user.index')->with('success', 'Data user berhasil diperbarui.');
     }
 
-    // Menghapus user
     public function destroyUser($id)
     {
         $user = User::findOrFail($id);
+        $namaUser = $user->name;
         $user->delete();
+
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menghapus user: {$namaUser}.",
+            'waktu'     => now(),
+        ]);
 
         return redirect()->route('admin.user.index')->with('success', 'User berhasil dihapus.');
     }
 
-    // CRUD Kategori
+    // ==========================================
+    // CRUD KATEGORI
+    // ==========================================
     public function indexKategori(Request $request)
     {
         $search = $request->input('search');
@@ -233,34 +274,37 @@ class AdminController extends Controller
         return view('admin.kategori.index', compact('kategoris', 'search'));
     }
 
-    // 2. Menampilkan form tambah kategori
     public function createKategori()
     {
         return view('admin.kategori.create');
     }
 
-    // 3. Menyimpan kategori baru
     public function storeKategori(Request $request)
     {
         $request->validate([
             'nama_kategori' => 'required|string|max:255|unique:kategori,nama_kategori',
         ]);
 
-        Kategori::create([
+        $kategori = Kategori::create([
             'nama_kategori' => $request->nama_kategori,
+        ]);
+
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menambahkan kategori baru: {$kategori->nama_kategori}.",
+            'waktu'     => now(),
         ]);
 
         return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil ditambahkan.');
     }
 
-    // 4. Menampilkan form edit kategori
     public function editKategori($id)
     {
         $kategori = Kategori::findOrFail($id);
         return view('admin.kategori.edit', compact('kategori'));
     }
 
-    // 5. Memperbarui kategori
     public function updateKategori(Request $request, $id)
     {
         $kategori = Kategori::findOrFail($id);
@@ -273,26 +317,41 @@ class AdminController extends Controller
             'nama_kategori' => $request->nama_kategori,
         ]);
 
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Memperbarui kategori: {$kategori->nama_kategori}.",
+            'waktu'     => now(),
+        ]);
+
         return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil diperbarui.');
     }
 
-    // 6. Menghapus kategori
     public function destroyKategori($id)
     {
         $kategori = Kategori::findOrFail($id);
 
-        // Cek apakah kategori masih dipakai oleh alat
         if ($kategori->alats()->count() > 0) {
             return redirect()->route('admin.kategori.index')
                 ->with('error', 'Kategori tidak dapat dihapus karena masih digunakan oleh data alat.');
         }
 
+        $namaKategori = $kategori->nama_kategori;
         $kategori->delete();
+
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menghapus kategori: {$namaKategori}.",
+            'waktu'     => now(),
+        ]);
 
         return redirect()->route('admin.kategori.index')->with('success', 'Kategori berhasil dihapus.');
     }
 
-    // 1. Menampilkan daftar peminjaman
+    // ==========================================
+    // TRANSAKSI PEMINJAMAN
+    // ==========================================
     public function indexPeminjaman(Request $request)
     {
         $search = $request->input('search');
@@ -311,7 +370,6 @@ class AdminController extends Controller
         return view('admin.peminjaman.index', compact('peminjamans', 'search'));
     }
 
-    // 2. Menampilkan form tambah peminjaman
     public function createPeminjaman()
     {
         $users = User::where('role', 'peminjam')->get();
@@ -319,7 +377,6 @@ class AdminController extends Controller
         return view('admin.peminjaman.create', compact('users', 'alats'));
     }
 
-    // 3. Menyimpan data peminjaman baru
     public function storePeminjaman(Request $request)
     {
         $request->validate([
@@ -342,11 +399,11 @@ class AdminController extends Controller
             ]);
 
             foreach ($request->alat_id as $index => $alatId) {
-                $jumlahPinjam = $request->jumlah[$index];
+                $jumlahPinjam = $request->jumlah[$index] ?? 1;
                 $alat = Alat::findOrFail($alatId);
 
                 if ($alat->stok < $jumlahPinjam) {
-                    throw new \Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi.");
+                    throw new \Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi (Sisa stok: {$alat->stok}).");
                 }
 
                 DetailPinjam::create([
@@ -356,15 +413,21 @@ class AdminController extends Controller
                 ]);
             }
 
+            // Catat Log Aktivitas
+            LogAktivitas::create([
+                'user_id'   => auth()->id(),
+                'aktivitas' => "Mengajukan peminjaman baru untuk Peminjaman ID #{$peminjaman->id}.",
+                'waktu'     => now(),
+            ]);
+
             DB::commit();
             return redirect()->route('admin.peminjaman.index')->with('success', 'Data peminjaman berhasil diajukan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->with('error', $e->getMessage());
+            dd("Error pada storePeminjaman: " . $e->getMessage());
         }
     }
 
-    // 4. Memperbarui status peminjaman
     public function updateStatusPeminjaman(Request $request, $id)
     {
         $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
@@ -382,7 +445,7 @@ class AdminController extends Controller
                 foreach ($peminjaman->detailPinjams as $detail) {
                     $alat = $detail->alat;
                     if ($alat->stok < $detail->jumlah) {
-                        throw new \Exception("Stok alat {$alat->nama_alat} tidak mencukupi untuk dipinjam.");
+                        throw new \Exception("Stok alat '{$alat->nama_alat}' tidak mencukupi untuk dipinjam.");
                     }
                     $alat->decrement('stok', $detail->jumlah);
                 }
@@ -394,15 +457,21 @@ class AdminController extends Controller
 
             $peminjaman->update(['status' => $statusBaru]);
 
+            // Catat Log Aktivitas
+            LogAktivitas::create([
+                'user_id'   => auth()->id(),
+                'aktivitas' => "Mengubah status peminjaman ID #{$peminjaman->id} dari '{$statusLama}' menjadi '{$statusBaru}'.",
+                'waktu'     => now(),
+            ]);
+
             DB::commit();
             return redirect()->route('admin.peminjaman.index')->with('success', 'Status peminjaman berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', $e->getMessage());
+            dd("Error pada updateStatusPeminjaman: " . $e->getMessage());
         }
     }
 
-    // 5. Menghapus data peminjaman
     public function destroyPeminjaman($id)
     {
         $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
@@ -413,16 +482,22 @@ class AdminController extends Controller
             }
         }
 
+        $idPinjam = $peminjaman->id;
         $peminjaman->delete();
+
+        // Catat Log Aktivitas
+        LogAktivitas::create([
+            'user_id'   => auth()->id(),
+            'aktivitas' => "Menghapus transaksi peminjaman ID #{$idPinjam}.",
+            'waktu'     => now(),
+        ]);
 
         return redirect()->route('admin.peminjaman.index')->with('success', 'Data peminjaman berhasil dihapus.');
     }
 
     // ==========================================
-    // MODUL KELOLA PENGEMBALIAN (OTOMATIS DENDA)
+    // MODUL KELOLA PENGEMBALIAN & DENDA
     // ==========================================
-
-    // Menampilkan Halaman Kelola Pengembalian
     public function indexPengembalian(Request $request)
     {
         $search = $request->input('search');
@@ -441,7 +516,6 @@ class AdminController extends Controller
         return view('admin.pengembalian.index', compact('peminjamans', 'search'));
     }
 
-    // Memproses Pengembalian Alat
     public function prosesPengembalian(Request $request, $id)
     {
         $request->validate([
@@ -452,7 +526,7 @@ class AdminController extends Controller
         try {
             $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
 
-            // 1. Hitung Otomatis Hari Telat & Denda Keterlambatan
+            // 1. Hitung Otomatis Denda Keterlambatan
             $tglRencanaKembali = Carbon::parse($peminjaman->tgl_kembali_plan)->startOfDay();
             $tglDikembalikan = Carbon::now()->startOfDay();
 
@@ -464,15 +538,15 @@ class AdminController extends Controller
                 $dendaTelat = $hariTelat * 1000; // Rp 1.000 / hari
             }
 
-            // 2. Hitung Denda Kerusakan
+            // 2. Hitung Denda Kerusakan/Kehilangan
             $dendaKondisi = 0;
             if ($request->kondisi_kembali == 'Rusak') {
-                $dendaKondisi = 30000; // Rp 30.000
+                $dendaKondisi = 30000;
             } elseif ($request->kondisi_kembali == 'Hilang') {
-                $dendaKondisi = 50000; // Rp 50.000
+                $dendaKondisi = 50000;
             }
 
-            // 3. Total Denda Akhir
+            // 3. Total Denda
             $totalDenda = $dendaTelat + $dendaKondisi;
 
             // 4. Kembalikan Stok Alat
@@ -480,24 +554,31 @@ class AdminController extends Controller
                 $detail->alat->increment('stok', $detail->jumlah);
             }
 
-            // 5. Update Status Peminjaman Selesai
+            // 5. Update Status Peminjaman menjadi 'selesai'
             $peminjaman->update([
                 'status' => 'selesai'
             ]);
 
-            // 6. Simpan Detail Pengembalian ke Database
+            // 6. Simpan Detail Pengembalian ke Database (Opsional jika ada model Pengembalian)
             if (class_exists('App\Models\Pengembalian')) {
                 \App\Models\Pengembalian::create([
-                    'peminjaman_id' => $peminjaman->id,
-                    'petugas_id' => auth()->id(), // <-- TAMBAHKAN BARIS INI
-                    'tgl_dikembalikan' => $tglDikembalikan,
+                    'peminjaman_id'   => $peminjaman->id,
+                    'petugas_id'      => auth()->id(),
+                    'tgl_kembali'     => now(),
                     'kondisi_kembali' => $request->kondisi_kembali,
-                    'hari_telat' => $hariTelat,
-                    'denda_telat' => $dendaTelat,
-                    'denda_kondisi' => $dendaKondisi,
-                    'total_denda' => $totalDenda,
+                    'hari_telat'      => $hariTelat,
+                    'denda_telat'     => $dendaTelat,
+                    'denda_kondisi'   => $dendaKondisi,
+                    'total_denda'     => $totalDenda,
                 ]);
             }
+
+            // 7. Catat Log Aktivitas
+            LogAktivitas::create([
+                'user_id'   => auth()->id(),
+                'aktivitas' => "Memproses pengembalian alat untuk peminjaman ID #{$peminjaman->id} (Kondisi: {$request->kondisi_kembali}, Denda: Rp " . number_format($totalDenda, 0, ',', '.') . ").",
+                'waktu'     => now(),
+            ]);
 
             DB::commit();
 
@@ -509,7 +590,7 @@ class AdminController extends Controller
             return redirect()->route('admin.pengembalian.index')->with('success', $pesan);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal memproses pengembalian: ' . $e->getMessage());
+            dd("Error pada prosesPengembalian: " . $e->getMessage());
         }
     }
 }

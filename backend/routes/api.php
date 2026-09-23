@@ -1,11 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\AlatController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\PeminjamanController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PengembalianController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\LogAktivitasController;
 
 // Public Routes (Tidak perlu token)
 Route::post('/register', [AuthController::class, 'register']);
@@ -43,7 +46,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/pengembalian/{pengembalian}', [PengembalianController::class, 'destroy']);
 
         Route::get('/log-aktivitas', [LogAktivitasController::class, 'index']);
-
     });
 
     // Khusus Peminjam

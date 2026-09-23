@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Kategori extends Model
 {
     protected $table = 'kategori';
-    protected $filltable = ['nama_kategori'];
+    protected $fillable = ['nama_kategori'];
 
-    public function alat(): HasMany {
+    public function alats(): HasMany {
         return $this->hasMany(Alat::class);
     }
 }
