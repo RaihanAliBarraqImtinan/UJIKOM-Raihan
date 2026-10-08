@@ -17,8 +17,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
-// Route Logout
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+// Route Logout (Bisa diakses via GET & POST agar menahan error 419 saat tekan tombol Back)
+Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
 // === ADMIN ROUTES ===
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

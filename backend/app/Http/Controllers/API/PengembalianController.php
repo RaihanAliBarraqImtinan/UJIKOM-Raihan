@@ -42,11 +42,20 @@ class PengembalianController extends Controller
     public function store(StorePengembalianRequest $request): JsonResponse
     {
         try {
+            // Guarding (ADM-K 003 / MON-004): Denda tidak boleh bernilai negatif
+            if (isset($request->denda) && $request->denda < 0) {
+                throw new Exception("Nominal denda tidak boleh bernilai negatif.");
+            }
+
             $pengembalian = DB::transaction(function () use ($request) {
                 // Kunci baris peminjaman ini selama transaksi agar tidak dimanipulasi proses lain
                 $peminjaman = Peminjaman::with('detailPinjam')
                     ->lockForUpdate()
                     ->find($request->peminjaman_id);
+
+                if (!$peminjaman) {
+                    throw new Exception("Data peminjaman tidak ditemukan.");
+                }
 
                 // Guarding: Pastikan statusnya sedang dipinjam
                 if ($peminjaman->status !== 'dipinjam') {
@@ -63,7 +72,7 @@ class PengembalianController extends Controller
                 // 1. Insert data ke tabel pengembalian
                 $pengembalian = Pengembalian::create([
                     'peminjaman_id'   => $peminjaman->id,
-                    'tgl_kembali'     => now()->toDateTimeString(), // Menggunakan format timestamp lengkap
+                    'tgl_kembali'     => now()->toDateTimeString(),
                     'kondisi_kembali' => $request->kondisi_kembali,
                     'denda'           => $request->denda ?? 0,
                     'petugas_id'      => auth()->id(),
@@ -75,7 +84,9 @@ class PengembalianController extends Controller
                 // 3. Kembalikan (tambah) stok alat berdasarkan detail_pinjam
                 foreach ($peminjaman->detailPinjam as $detail) {
                     $alat = Alat::lockForUpdate()->find($detail->alat_id);
-                    $alat->increment('stok', $detail->jumlah);
+                    if ($alat) {
+                        $alat->increment('stok', $detail->jumlah);
+                    }
                 }
 
                 // Catat ke log aktivitas petugas jika ada
@@ -118,15 +129,25 @@ class PengembalianController extends Controller
 
     public function update(UpdatePengembalianRequest $request, Pengembalian $pengembalian): JsonResponse
     {
-        $pengembalian->update([
-            'kondisi_kembali' => $request->kondisi_kembali,
-            'denda'           => $request->denda ?? $pengembalian->denda,
-        ]);
+        try {
+            // Guarding: Denda tidak boleh negatif pada saat update
+            if (isset($request->denda) && $request->denda < 0) {
+                throw new Exception("Nominal denda tidak boleh bernilai negatif.");
+            }
 
-        return response()->json([
-            'message' => 'Data pengembalian berhasil diperbarui.',
-            'data'    => $pengembalian->load(['peminjaman.user', 'petugas']),
-        ]);
+            $pengembalian->update([
+                'kondisi_kembali' => $request->kondisi_kembali ?? $pengembalian->kondisi_kembali,
+                'denda'           => $request->denda ?? $pengembalian->denda,
+            ]);
+
+            return response()->json([
+                'message' => 'Data pengembalian berhasil diperbarui.',
+                'data'    => $pengembalian->load(['peminjaman.user', 'petugas']),
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
     public function destroy(Pengembalian $pengembalian): JsonResponse

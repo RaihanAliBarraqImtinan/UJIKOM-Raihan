@@ -75,7 +75,7 @@ class AdminController extends Controller
 
         $alat = Alat::create($data);
 
-        // Catat Log Aktivitas (Disesuaikan dengan modul)
+        // Catat Log Aktivitas
         LogAktivitas::create([
             'user_id'   => auth()->id(),
             'aktivitas' => "Menambahkan data alat baru: {$alat->nama_alat}.",
@@ -424,7 +424,7 @@ class AdminController extends Controller
             return redirect()->route('admin.peminjaman.index')->with('success', 'Data peminjaman berhasil diajukan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            dd("Error pada storePeminjaman: " . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal mengajukan peminjaman: ' . $e->getMessage());
         }
     }
 
@@ -433,7 +433,7 @@ class AdminController extends Controller
         $peminjaman = Peminjaman::with('detailPinjams.alat')->findOrFail($id);
 
         $request->validate([
-            'status' => 'required|in:diajukan,dipinjam,selesai,telat',
+            'status' => 'required|in:diajukan,dipinjam,dikembalikan,selesai,telat',
         ]);
 
         DB::beginTransaction();
@@ -449,7 +449,7 @@ class AdminController extends Controller
                     }
                     $alat->decrement('stok', $detail->jumlah);
                 }
-            } elseif ($statusLama == 'dipinjam' && ($statusBaru == 'selesai')) {
+            } elseif ($statusLama == 'dipinjam' && ($statusBaru == 'dikembalikan' || $statusBaru == 'selesai')) {
                 foreach ($peminjaman->detailPinjams as $detail) {
                     $detail->alat->increment('stok', $detail->jumlah);
                 }
@@ -468,7 +468,7 @@ class AdminController extends Controller
             return redirect()->route('admin.peminjaman.index')->with('success', 'Status peminjaman berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
-            dd("Error pada updateStatusPeminjaman: " . $e->getMessage());
+            return back()->with('error', 'Gagal memperbarui status: ' . $e->getMessage());
         }
     }
 
@@ -554,12 +554,12 @@ class AdminController extends Controller
                 $detail->alat->increment('stok', $detail->jumlah);
             }
 
-            // 5. Update Status Peminjaman menjadi 'selesai'
+            // 5. Update Status Peminjaman (Pastikan string ini terdaftar di migration)
             $peminjaman->update([
                 'status' => 'selesai'
             ]);
 
-            // 6. Simpan Detail Pengembalian ke Database (Opsional jika ada model Pengembalian)
+            // 6. Simpan Detail Pengembalian ke Database (Opsional)
             if (class_exists('App\Models\Pengembalian')) {
                 \App\Models\Pengembalian::create([
                     'peminjaman_id'   => $peminjaman->id,
@@ -575,7 +575,7 @@ class AdminController extends Controller
 
             // 7. Catat Log Aktivitas
             LogAktivitas::create([
-                'user_id'   => auth()->id(),
+                'user_id'   => auth()->id(),    
                 'aktivitas' => "Memproses pengembalian alat untuk peminjaman ID #{$peminjaman->id} (Kondisi: {$request->kondisi_kembali}, Denda: Rp " . number_format($totalDenda, 0, ',', '.') . ").",
                 'waktu'     => now(),
             ]);
@@ -590,7 +590,7 @@ class AdminController extends Controller
             return redirect()->route('admin.pengembalian.index')->with('success', $pesan);
         } catch (\Exception $e) {
             DB::rollBack();
-            dd("Error pada prosesPengembalian: " . $e->getMessage());
+            return back()->with('error', 'Gagal memproses pengembalian: ' . $e->getMessage());
         }
     }
 }

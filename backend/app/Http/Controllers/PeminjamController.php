@@ -40,37 +40,71 @@ class PeminjamController extends Controller
     public function ajukanPeminjaman(Request $request)
     {
         $request->validate([
-            'tgl_kembali_plan' => 'required|date|after:today',
-            'alat_id' => 'required|array',
-            'jumlah' => 'required|array',
+            'tgl_kembali_plan' => 'required|date|after_or_equal:today',
+            'alat_id'          => 'required|array',
+            'jumlah'           => 'required|array',
         ]);
+
+        // Guarding (PIN-P 004): Pastikan minimal ada 1 item alat dengan jumlah > 0
+        $adaItemValid = false;
+        foreach ($request->jumlah as $jml) {
+            if ($jml > 0) {
+                $adaItemValid = true;
+                break;
+            }
+        }
+
+        if (!$adaItemValid) {
+            return redirect()->back()->with('error', 'Jumlah alat yang dipinjam minimal 1.');
+        }
 
         DB::beginTransaction();
         try {
+            // Guarding (PIN-P 002): Cek stok fisik tiap alat di database
+            foreach ($request->alat_id as $index => $alatId) {
+                $jumlahPinjam = $request->jumlah[$index] ?? 0;
+                if ($jumlahPinjam <= 0) {
+                    continue;
+                }
+
+                $alat = Alat::lockForUpdate()->find($alatId);
+                if (!$alat) {
+                    throw new \Exception("Data alat tidak ditemukan.");
+                }
+
+                if ($jumlahPinjam > $alat->stok) {
+                    throw new \Exception("Jumlah peminjaman untuk alat '{$alat->nama_alat}' (permintaan: {$jumlahPinjam}) melebihi stok yang tersedia ({$alat->stok}).");
+                }
+            }
+
+            // Buat header transaksi peminjaman
             $peminjaman = Peminjaman::create([
-                'user_id' => auth()->id(),
-                'tgl_pinjam' => now(),
+                'user_id'          => auth()->id(),
+                'tgl_pinjam'       => now(),
                 'tgl_kembali_plan' => $request->tgl_kembali_plan,
-                'status' => 'diajukan',
+                'status'           => 'diajukan',
             ]);
 
+            // Buat detail transaksi
             foreach ($request->alat_id as $index => $alatId) {
-                if (!isset($request->jumlah[$index]) || $request->jumlah[$index] <= 0) {
+                $jumlahPinjam = $request->jumlah[$index] ?? 0;
+                if ($jumlahPinjam <= 0) {
                     continue;
                 }
 
                 DetailPinjam::create([
                     'peminjaman_id' => $peminjaman->id,
-                    'alat_id' => $alatId,
-                    'jumlah' => $request->jumlah[$index],
+                    'alat_id'       => $alatId,
+                    'jumlah'        => $jumlahPinjam,
                 ]);
             }
 
             DB::commit();
             return redirect()->route('peminjam.riwayat')->with('success', 'Pengajuan peminjaman berhasil dikirim.');
+
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Gagal mengajukan peminjaman: ' . $e->getMessage());
+            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 

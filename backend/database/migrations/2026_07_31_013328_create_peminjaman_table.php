@@ -15,7 +15,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->date('tgl_pinjam');
             $table->date('tgl_kembali_plan');
-            $table->enum('status', ['diajukan', 'dipinjam', 'dikembalikan', 'telat'])->default('diajukan');
+            // Tambahkan 'selesai' dan 'ditolak' di dalam array enum di bawah ini
+            $table->enum('status', ['diajukan', 'dipinjam', 'dikembalikan', 'selesai', 'telat', 'ditolak'])->default('diajukan');
             $table->timestamps();
         });
     }

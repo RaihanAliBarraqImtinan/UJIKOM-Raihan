@@ -9,6 +9,14 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    // Tambahkan constructor untuk mencegah caching browser pada halaman login
+    public function __construct()
+    {
+        header('Cache-Control: no-cache, no-store, max-age=0, must-revalidate');
+        header('Pragma: no-cache');
+        header('Expires: Sat, 01 Jan 1990 00:00:00 GMT');
+    }
+
     // Tambahan untuk API / Form Register
     public function register(Request $request)
     {
@@ -75,10 +83,19 @@ class AuthController extends Controller
     // Proses Logout
     public function logout(Request $request)
     {
+        // Hapus token API jika menggunakan Sanctum/Tokens
+        if ($request->user() && $request->user()->currentAccessToken()) {
+            $request->user()->currentAccessToken()->delete();
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        // Redirect ke login sambil mengirimkan header anti-cache
+        return redirect()->route('login')
+            ->header('Cache-Control', 'no-cache, no-store, max-age=0, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Sat, 01 Jan 1990 00:00:00 GMT');
     }
 }
