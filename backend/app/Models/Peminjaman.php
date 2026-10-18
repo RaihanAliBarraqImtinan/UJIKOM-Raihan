@@ -27,8 +27,8 @@ class Peminjaman extends Model
     }
 
     // UBAH DI SINI: Tambahkan huruf 's' di akhir nama method
-    public function detailPinjams(): HasMany {
-        return $this->hasMany(DetailPinjam::class);
+    public function detailPinjam(): HasMany {
+        return $this->hasMany(DetailPinjam::class, 'peminjaman_id');
     }
 
     public function pengembalian(): HasOne {

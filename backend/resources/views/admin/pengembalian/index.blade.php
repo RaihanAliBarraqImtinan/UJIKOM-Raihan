@@ -55,8 +55,13 @@
                         <td class="p-4 font-semibold text-gray-800">{{ $item->user->name }}</td>
                         <td class="p-4">
                             <ul class="list-disc list-inside space-y-1">
-                                @foreach($item->detailPinjams as $detail)
-                                    <li>{{ $detail->alat->nama_alat }} <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-medium">{{ $detail->jumlah }} pcs</span></li>
+                                @foreach($item->detailPinjams ?? collect() as $detail)
+                                    <li>
+                                        {{ $detail->alat->nama_alat ?? 'Alat tidak ditemukan' }} 
+                                        <span class="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full font-medium">
+                                            {{ $detail->jumlah ?? 0 }} pcs
+                                        </span>
+                                    </li>
                                 @endforeach
                             </ul>
                         </td>

@@ -1,10 +1,18 @@
-<?php
+<?php 
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\PeminjamController;
-use App\Http\Controllers\AuthController;
+
+// Import Controller Admin yang sudah dipecah di dalam folder Admin
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\CrudUser;
+use App\Http\Controllers\Admin\CrudKategori;
+use App\Http\Controllers\Admin\CrudAlat;
+use App\Http\Controllers\Admin\CrudPeminjaman;
+use App\Http\Controllers\Admin\CrudPengembalian;
+use App\Http\Controllers\Admin\LogAktivitas;
 
 // Redirect halaman utama
 Route::get('/', function () {
@@ -20,44 +28,47 @@ Route::middleware('guest')->group(function () {
 // Route Logout (Bisa diakses via GET & POST agar menahan error 419 saat tekan tombol Back)
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
-// === ADMIN ROUTES ===
+// === ADMIN ROUTES (Dipecah sesuai modul fitur) ===
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // CRUD User
-    Route::get('/users', [AdminController::class, 'indexUser'])->name('user.index');
-    Route::get('/users/create', [AdminController::class, 'createUser'])->name('user.create');
-    Route::post('/users', [AdminController::class, 'storeUser'])->name('user.store');
-    Route::get('/users/{id}/edit', [AdminController::class, 'editUser'])->name('user.edit');
-    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('user.update');
-    Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('user.destroy');
+    // CRUD User (Menggunakan CrudUser)
+    Route::get('/users', [CrudUser::class, 'index'])->name('user.index');
+    Route::get('/users/create', [CrudUser::class, 'create'])->name('user.create');
+    Route::post('/users', [CrudUser::class, 'store'])->name('user.store');
+    Route::get('/users/{id}/edit', [CrudUser::class, 'edit'])->name('user.edit');
+    Route::put('/users/{id}', [CrudUser::class, 'update'])->name('user.update');
+    Route::delete('/users/{id}', [CrudUser::class, 'destroy'])->name('user.destroy');
 
-    // CRUD Kategori
-    Route::get('/kategori', [AdminController::class, 'indexKategori'])->name('kategori.index');
-    Route::get('/kategori/create', [AdminController::class, 'createKategori'])->name('kategori.create');
-    Route::post('/kategori', [AdminController::class, 'storeKategori'])->name('kategori.store');
-    Route::get('/kategori/{id}/edit', [AdminController::class, 'editKategori'])->name('kategori.edit');
-    Route::put('/kategori/{id}', [AdminController::class, 'updateKategori'])->name('kategori.update');
-    Route::delete('/kategori/{id}', [AdminController::class, 'destroyKategori'])->name('kategori.destroy');
+    // CRUD Kategori (Menggunakan CrudKategori)
+    Route::get('/kategori', [CrudKategori::class, 'index'])->name('kategori.index');
+    Route::get('/kategori/create', [CrudKategori::class, 'create'])->name('kategori.create');
+    Route::post('/kategori', [CrudKategori::class, 'store'])->name('kategori.store');
+    Route::get('/kategori/{id}/edit', [CrudKategori::class, 'edit'])->name('kategori.edit');
+    Route::put('/kategori/{id}', [CrudKategori::class, 'update'])->name('kategori.update');
+    Route::delete('/kategori/{id}', [CrudKategori::class, 'destroy'])->name('kategori.destroy');
 
-    // CRUD Alat
-    Route::get('/alat', [AdminController::class, 'indexAlat'])->name('alat.index');
-    Route::get('/alat/create', [AdminController::class, 'createAlat'])->name('alat.create');
-    Route::post('/alat', [AdminController::class, 'storeAlat'])->name('alat.store');
-    Route::get('/alat/{id}/edit', [AdminController::class, 'editAlat'])->name('alat.edit');
-    Route::put('/alat/{id}', [AdminController::class, 'updateAlat'])->name('alat.update');
-    Route::delete('/alat/{id}', [AdminController::class, 'destroyAlat'])->name('alat.destroy');
+    // CRUD Alat (Menggunakan CrudAlat)
+    Route::get('/alat', [CrudAlat::class, 'index'])->name('alat.index');
+    Route::get('/alat/create', [CrudAlat::class, 'create'])->name('alat.create');
+    Route::post('/alat', [CrudAlat::class, 'store'])->name('alat.store');
+    Route::get('/alat/{id}/edit', [CrudAlat::class, 'edit'])->name('alat.edit');
+    Route::put('/alat/{id}', [CrudAlat::class, 'update'])->name('alat.update');
+    Route::delete('/alat/{id}', [CrudAlat::class, 'destroy'])->name('alat.destroy');
 
-    // CRUD Peminjaman
-    Route::get('/peminjaman', [AdminController::class, 'indexPeminjaman'])->name('peminjaman.index');
-    Route::get('/peminjaman/create', [AdminController::class, 'createPeminjaman'])->name('peminjaman.create');
-    Route::post('/peminjaman', [AdminController::class, 'storePeminjaman'])->name('peminjaman.store');
-    Route::put('/peminjaman/{id}', [AdminController::class, 'updateStatusPeminjaman'])->name('peminjaman.update');
-    Route::delete('/peminjaman/{id}', [AdminController::class, 'destroyPeminjaman'])->name('peminjaman.destroy');
+    // CRUD Peminjaman (Menggunakan CrudPeminjaman)
+    Route::get('/peminjaman', [CrudPeminjaman::class, 'index'])->name('peminjaman.index');
+    Route::get('/peminjaman/create', [CrudPeminjaman::class, 'create'])->name('peminjaman.create');
+    Route::post('/peminjaman', [CrudPeminjaman::class, 'store'])->name('peminjaman.store');
+    Route::put('/peminjaman/{id}', [CrudPeminjaman::class, 'updateStatus'])->name('peminjaman.update');
+    Route::delete('/peminjaman/{id}', [CrudPeminjaman::class, 'destroy'])->name('peminjaman.destroy');
 
-    // MODUL KELOLA PENGEMBALIAN (ADMIN)
-    Route::get('/pengembalian', [AdminController::class, 'indexPengembalian'])->name('pengembalian.index');
-    Route::post('/pengembalian/{id}', [AdminController::class, 'prosesPengembalian'])->name('pengembalian.proses');
+    // MODUL KELOLA PENGEMBALIAN (Menggunakan CrudPengembalian)
+    Route::get('/pengembalian', [CrudPengembalian::class, 'index'])->name('pengembalian.index');
+    Route::post('/pengembalian/{id}', [CrudPengembalian::class, 'store'])->name('pengembalian.proses');
+
+    // MODUL LOG AKTIVITAS (Menggunakan LogAktivitas)
+    Route::get('/log-aktivitas', [LogAktivitas::class, 'index'])->name('log.index');
 });
 
 // === PETUGAS ROUTES ===

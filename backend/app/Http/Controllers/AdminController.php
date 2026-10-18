@@ -276,7 +276,7 @@ class AdminController extends Controller
 
     public function createKategori()
     {
-        return view('admin.kategori.create');
+        return view('admin.kategori.create'); 
     }
 
     public function storeKategori(Request $request)

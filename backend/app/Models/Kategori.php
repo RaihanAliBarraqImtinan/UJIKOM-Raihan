@@ -10,7 +10,7 @@ class Kategori extends Model
     protected $table = 'kategori';
     protected $fillable = ['nama_kategori'];
 
-    public function alats(): HasMany {
-        return $this->hasMany(Alat::class);
+    public function alat(): HasMany {
+        return $this->hasMany(Alat::class, 'kategori_id');
     }
 }
