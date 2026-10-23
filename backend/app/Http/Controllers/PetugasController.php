@@ -18,7 +18,7 @@ class PetugasController extends Controller
     {
         $search = $request->input('search');
 
-        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
+        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat'])
             ->where('status', 'diajukan')
             ->when($search, function ($query, $search) {
                 return $query->whereHas('user', function ($q) use ($search) {
@@ -36,10 +36,10 @@ class PetugasController extends Controller
     {
         DB::beginTransaction();
         try {
-            $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
+            $peminjaman = Peminjaman::with('detailPinjam')->findOrFail($id);
             $peminjaman->update(['status' => 'dipinjam']);
 
-            foreach ($peminjaman->detailPinjams as $detail) {
+            foreach ($peminjaman->detailPinjam as $detail) {
                 $alat = Alat::findOrFail($detail->alat_id);
                 $alat->stok -= $detail->jumlah;
                 $alat->save();
@@ -77,7 +77,7 @@ class PetugasController extends Controller
     {
         $search = $request->input('search');
 
-        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat'])
+        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat'])
             ->whereIn('status', ['dipinjam', 'telat'])
             ->when($search, function ($query, $search) {
                 return $query->whereHas('user', function ($q) use ($search) {
@@ -95,14 +95,14 @@ class PetugasController extends Controller
     {
         DB::beginTransaction();
         try {
-            $peminjaman = Peminjaman::with('detailPinjams')->findOrFail($id);
+            $peminjaman = Peminjaman::with('detailPinjam')->findOrFail($id);
 
             if ($peminjaman->status === 'selesai') {
                 return redirect()->back()->with('error', 'Peminjaman ini sudah dikembalikan.');
             }
 
             // 1. Kembalikan stok alat
-            foreach ($peminjaman->detailPinjams as $detail) {
+            foreach ($peminjaman->detailPinjam as $detail) {
                 $alat = Alat::findOrFail($detail->alat_id);
                 $alat->stok += $detail->jumlah;
                 $alat->save();
@@ -148,7 +148,7 @@ class PetugasController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $peminjamans = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])
+        $peminjamans = Peminjaman::with(['user', 'detailPinjam.alat', 'pengembalian'])
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
@@ -164,7 +164,7 @@ class PetugasController extends Controller
     // Menampilkan Cetak Nota Struk Peminjaman
     public function cetakNota($id)
     {
-        $peminjaman = Peminjaman::with(['user', 'detailPinjams.alat', 'pengembalian'])->findOrFail($id);
+        $peminjaman = Peminjaman::with(['user', 'detailPinjam.alat', 'pengembalian'])->findOrFail($id);
 
         return view('petugas.laporan.cetak', compact('peminjaman'));
     }

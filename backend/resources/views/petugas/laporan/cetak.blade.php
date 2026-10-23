@@ -79,7 +79,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($peminjaman->detailPinjams as $detail)
+            @foreach($peminjaman->detailPinjam as $detail)
                 <tr>
                     <td>{{ $detail->alat->nama_alat ?? 'Alat' }}</td>
                     <td class="text-right">{{ $detail->jumlah }}</td>

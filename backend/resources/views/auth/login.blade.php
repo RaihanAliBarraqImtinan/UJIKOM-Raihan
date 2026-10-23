@@ -20,6 +20,12 @@
             </div>
         @endif
 
+        @if(session('success'))
+            <div class="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <!-- Alert Error Validasi -->
         @if($errors->any())
             <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
@@ -53,6 +59,13 @@
                     class="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition duration-200">
                 Masuk
             </button>
+        </form>
+
+        <!-- Link ke Halaman Register -->
+        <p class="mt-4 text-center text-gray-600 text-sm">
+            Belum punya akun? <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Daftar di sini</a>
+        </p>
+    </div>
         </form>
     </div>
 

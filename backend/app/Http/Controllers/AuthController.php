@@ -17,32 +17,6 @@ class AuthController extends Controller
         header('Expires: Sat, 01 Jan 1990 00:00:00 GMT');
     }
 
-    // Tambahan untuk API / Form Register
-    public function register(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'no_hp' => 'nullable|string',
-            'alamat' => 'nullable|string',
-        ]);
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => 'peminjam',
-            'no_hp' => $request->no_hp,
-            'alamat' => $request->alamat,
-        ]);
-
-        return response()->json([
-            'message' => 'Registrasi berhasil',
-            'user' => $user
-        ], 201);
-    }
-
     // Menampilkan Form Login
     public function showLoginForm()
     {
@@ -78,6 +52,36 @@ class AuthController extends Controller
         return back()->withErrors([
             'email' => 'Email atau password salah.',
         ])->onlyInput('email');
+    }
+
+    // Menampilkan Form Register
+    public function showRegisterForm()
+    {
+        return view('auth.register');
+    }
+
+    // Memproses Register
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'no_hp' => 'nullable|string',
+            'alamat' => 'nullable|string',
+            'role' => 'required|in:peminjam,admin,petugas',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'], // Set role berdasarkan input dari form
+            'no_hp' => $validated['no_hp'],
+            'alamat' => $validated['alamat'],
+        ]);
+
+        return view('auth.login')->with('success', 'Registrasi berhasil! Silakan login.');
     }
 
     // Proses Logout

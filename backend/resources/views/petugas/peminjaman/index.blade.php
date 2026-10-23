@@ -54,7 +54,7 @@
                             <td class="py-3 px-4 border-b">{{ $item->tgl_kembali_plan }}</td>
                             <td class="py-3 px-4 border-b">
                                 <ul class="list-disc list-inside space-y-1 text-xs">
-                                    @foreach($item->detailPinjams as $detail)
+                                    @foreach($item->detailPinjam as $detail)
                                         <li>
                                             <span class="font-semibold">{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}</span>
                                             (Jumlah: {{ $detail->jumlah }})

@@ -22,7 +22,7 @@
                     <tr class="hover:bg-gray-50 transition">
                         <td class="py-3 px-4">
                             <ul class="list-disc list-inside space-y-1">
-                                @foreach($peminjaman->detailPinjams as $detail)
+                                @foreach($peminjaman->detailPinjam as $detail)
                                     <li>
                                         <span class="font-medium text-gray-900">{{ $detail->alat->nama_alat ?? 'Alat Dihapus' }}</span> 
                                         <span class="text-xs text-gray-500">({{ $detail->jumlah }} unit)</span>

@@ -58,7 +58,7 @@
                             </td>
                             <td>
                                 <ul class="mb-0 ps-3">
-                                    @foreach($item->detailPinjams as $detail)
+                                    @foreach($item->detailPinjam as $detail)
                                         <li>{{ $detail->alat->nama_alat ?? 'Alat' }} ({{ $detail->jumlah }} pcs)</li>
                                     @endforeach
                                 </ul>

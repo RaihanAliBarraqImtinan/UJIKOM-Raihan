@@ -25,6 +25,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
+// Route Guest untuk Register (Jika ingin menambahkan fitur register)
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
+
 // Route Logout (Bisa diakses via GET & POST agar menahan error 419 saat tekan tombol Back)
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
 
